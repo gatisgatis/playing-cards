@@ -1,11 +1,13 @@
 //ThisBuild / version := "0.1.0-SNAPSHOT"
 
-ThisBuild / scalaVersion := "2.13.10"
+scalaVersion := "2.13.10"
 
 import Dependencies._
 
 libraryDependencies ++= Seq(
   ZIO.Http,
+  Akka.ActorTyped,
+  Akka.PersistenceTyped,
 )
 
 scalacOptions := Seq(
