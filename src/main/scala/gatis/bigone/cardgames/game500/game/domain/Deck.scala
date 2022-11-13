@@ -1,6 +1,6 @@
-package gatis.bigone.cardgames.game500.domain
+package gatis.bigone.cardgames.game500.game.domain
 
-import gatis.bigone.cardgames.common.cards.Rank.*
+import gatis.bigone.cardgames.common.cards.Rank._
 import gatis.bigone.cardgames.common.cards.Suit
 
 import scala.util.Random

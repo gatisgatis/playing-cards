@@ -1,8 +1,8 @@
 package gatis.bigone.http
 
-import zhttp.http.*
+import zhttp.http._
 import zhttp.service.Server
-import zio.*
+import zio._
 
 object TestServer extends ZIOAppDefault {
 

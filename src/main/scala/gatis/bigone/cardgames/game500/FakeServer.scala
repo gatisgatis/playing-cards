@@ -1,32 +1,34 @@
 package gatis.bigone.cardgames.game500
 
-import akka.NotUsed
-import akka.actor.typed.Behavior
-import akka.actor.typed.scaladsl.Behaviors
-
 // here should be only visible api from outside
 object FakeServer {
 
-  // get all tables
+  // receives request, parses it to a command. receives response. parses it to json and sends back.
+
+  // init request - get table state after browser refresh etc..
+  // GetTable
+
+  // get all tables (with filter values)
+  // GetTables
 
   // create table
+  // StartTable
 
   // join table
-
-  // do move
+  // AddPlayer
 
   // leave table
+  // KickPlayer
 
   // update player status for table
+  // UpdatePlayerStatus
+
+  // agree to start game
+  // AgreeToStartGame
+
+  // do move
+  // one of MakeBid,TakeCards,PassCards, GiveUp, PlayCard
 
   // destroy table ???
-
-  //
-
-  def main(args: Array[String]): Unit =
-//    val testing: Behavior[NotUsed] = Behaviors.setup { context =>
-//      val manager = context.spawn()
-//    }
-    ???
-
+  // RemoveTable
 }

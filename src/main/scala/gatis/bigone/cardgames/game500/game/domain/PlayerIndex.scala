@@ -1,4 +1,4 @@
-package gatis.bigone.cardgames.game500.domain
+package gatis.bigone.cardgames.game500.game.domain
 
 sealed trait PlayerIndex {
   def toString: String

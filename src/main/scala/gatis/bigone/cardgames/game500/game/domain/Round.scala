@@ -1,7 +1,7 @@
-package gatis.bigone.cardgames.game500.domain
+package gatis.bigone.cardgames.game500.game.domain
 
 import gatis.bigone.cardgames.common.cards.Suit
-import gatis.bigone.cardgames.game500.domain.PlayerIndex.{FirstPlayer, SecondPlayer, ThirdPlayer}
+import gatis.bigone.cardgames.game500.game.domain.PlayerIndex.{FirstPlayer, SecondPlayer, ThirdPlayer}
 
 case class Round(
   roundNumber: Int,
@@ -11,12 +11,12 @@ case class Round(
   cardsToTake: List[Card] = Nil,
   trump: Option[Suit] = None,
   highestBid: Int = 0,
-  activePlayer: PlayerIndex = FirstPlayer,
+  activeIndex: PlayerIndex = FirstPlayer,
   biddingWinnerIndex: Option[PlayerIndex] = None,
   marriagePoints: Int = 0,
   isSmallMarriageAllowed: Boolean = false,
-  startPlayer: PlayerIndex = FirstPlayer, // when round starts, this should be selected at random
-  players: Map[PlayerIndex, Player] = Map.empty, // when updating this, we should check which player index
+  startIndex: PlayerIndex = FirstPlayer, // when game starts, this should be selected at random
+  players: Map[PlayerIndex, Player] = Map.empty, // when updating this, we should check which player index is free
 )
 
 object Round {
@@ -32,8 +32,8 @@ object Round {
       cardsToTake = cardsToTake,
       players = players,
       roundNumber = roundNumber,
-      activePlayer = startPlayerIndex,
-      startPlayer = startPlayerIndex,
+      activeIndex = startPlayerIndex,
+      startIndex = startPlayerIndex,
     )
   }
 }

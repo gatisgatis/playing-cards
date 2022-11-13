@@ -1,4 +1,4 @@
-package gatis.bigone.cardgames.game500.domain
+package gatis.bigone.cardgames.game500.game.domain
 
 import gatis.bigone.cardgames.common.cards.Suit
 
@@ -6,7 +6,7 @@ final case class Player(
   cards: List[Card],
   bid: Int = 0,
   points: Int = 0,
-  playerIndex: PlayerIndex, // do i need it here
+  index: PlayerIndex, // do i need it here?
   trickCount: Int = 0,
   playedCard: Option[Card] = None,
 ) {
@@ -20,7 +20,7 @@ final case class Player(
 object Player {
   def create(playerIndex: PlayerIndex, cards: List[Card] = Nil): Player =
     Player(
-      playerIndex = playerIndex,
+      index = playerIndex,
       cards = cards,
     )
 }
