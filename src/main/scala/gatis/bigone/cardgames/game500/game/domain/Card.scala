@@ -1,8 +1,8 @@
-package gatis.bigone.cardgames.game500.domain
+package gatis.bigone.cardgames.game500.game.domain
 
 import gatis.bigone.cardgames.common.cards.{CardTemplate, Rank, Suit}
 
-case class Card(rank: Rank, suit: Suit) extends CardTemplate(rank, suit) {
+case class Card(override val rank: Rank, override val suit: Suit) extends CardTemplate(rank, suit) {
   def strength: Int = rank.points // to compare which card takes a trick
   def points: Int = rank.points // to count points at the end of the round
 }
