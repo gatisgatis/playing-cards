@@ -7,16 +7,14 @@ import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
 object PassCards {
 
-  private def checkIfPassCardsPhase(game: Game): Either[Error, Unit] =
-    if (game.phase != PassingCards) Left(Error(code = DefaultGameError, message = "Cannot pass cards. No pass-cards phase now")) else Right(())
-
-  private def checkIfActivePlayerHasSelectedCards(cards: List[Card], )
-
   def apply(game: Game, cardToLeft: Card, cardToRight: Card): Either[Error, Game] = for {
-    _ <- checkIfPassCardsPhase(game)
+    _ <- checkIfPassingCardsPhase(game)
     activeIndex = game.round.activeIndex
     activePlayer <- game.round.players.getE(activeIndex)
-    _ <- if(!activePlayer.cards.contains(cardToLeft) || !activePlayer.cards.contains(cardToRight)) Left(Error(code = DefaultGameError, message = "Does not have selected cards")) else Right(())
+    _ <-
+      if (!activePlayer.cards.contains(cardToLeft) || !activePlayer.cards.contains(cardToRight))
+        Left(Error(code = DefaultGameError, message = "Does not have selected cards"))
+      else Right(())
     leftPlayer <- game.round.players.getE(activeIndex.next)
     rightPlayer <- game.round.players.getE(activeIndex.previous)
   } yield {
@@ -30,11 +28,16 @@ object PassCards {
     val playersUpdated = Map(
       activeIndex -> activePlayerUpdated,
       activeIndex.next -> leftPlayerUpdated,
-      activeIndex.previous -> rightPlayerUpdated
+      activeIndex.previous -> rightPlayerUpdated,
     )
     val roundUpdated = game.round.copy(players = playersUpdated)
 
     game.copy(round = roundUpdated, phase = PlayingCards)
   }
+
+  private def checkIfPassingCardsPhase(game: Game): Either[Error, Unit] =
+    if (game.phase != PassingCards)
+      Left(Error(code = DefaultGameError, message = "Cannot pass cards. No pass-cards phase now"))
+    else Right(())
 
 }

@@ -9,20 +9,21 @@ case class Round(
   previousTrick: List[Card] = Nil,
   requiredSuit: Option[Suit] = None,
   cardsToTake: List[Card] = Nil,
-  trump: Option[Suit] = None,
+  trumpSuit: Option[Suit] = None,
   highestBid: Int = 0,
   activeIndex: PlayerIndex = FirstPlayer,
   biddingWinnerIndex: Option[PlayerIndex] = None,
   marriagePoints: Int = 0,
-  isSmallMarriageAllowed: Boolean = false,
+  canSmallMarriage: Boolean = false,
   startIndex: PlayerIndex = FirstPlayer, // when game starts, this should be selected at random
-  players: Map[PlayerIndex, Player] = Map.empty, // when updating this, we should check which player index is free
+  players: Map[PlayerIndex, Player] = Map.empty,
 )
 
 object Round {
   val empty: Round = Round(roundNumber = 0)
 
-  def create(deck: List[Card], roundNumber: Int = 1, startPlayerIndex: PlayerIndex = FirstPlayer): Round = {
+  def create(startIndex: PlayerIndex = FirstPlayer, roundNumber: Int = 1): Round = {
+    val deck = Deck.shuffled
     val cardsToTake = deck.slice(0, 3)
     val player1 = Player.create(playerIndex = FirstPlayer, cards = deck.slice(3, 10))
     val player2 = Player.create(playerIndex = SecondPlayer, cards = deck.slice(10, 17))
@@ -32,8 +33,8 @@ object Round {
       cardsToTake = cardsToTake,
       players = players,
       roundNumber = roundNumber,
-      activeIndex = startPlayerIndex,
-      startIndex = startPlayerIndex,
+      activeIndex = startIndex,
+      startIndex = startIndex,
     )
   }
 }

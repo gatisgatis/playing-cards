@@ -6,7 +6,7 @@ final case class Player(
   cards: List[Card],
   bid: Int = 0,
   points: Int = 0,
-  index: PlayerIndex, // do i need it here?
+  index: PlayerIndex,
   trickCount: Int = 0,
   playedCard: Option[Card] = None,
 ) {

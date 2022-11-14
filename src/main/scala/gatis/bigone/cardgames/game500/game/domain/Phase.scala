@@ -6,16 +6,18 @@ sealed trait Phase {
 }
 
 object Phase {
-  case object WaitingForPlayers extends Phase {
-    override def toString: String = "Waiting For Players"
-    override def next: Phase = WaitingForGameToStart
-  }
-  case object WaitingForGameToStart extends Phase {
-    override def toString: String = "Waiting For Game To Start"
+  case object NotStarted extends Phase {
+    // init state to create an 'empty' game instance
+    override def toString: String = "Game Not Started"
     override def next: Phase = Bidding
   }
+  case object Finished extends Phase {
+    // last state. table knows that game is done and should congratulate winner and save results somewhere...
+    override def toString: String = "Game Finished"
+    override def next: Phase = NotStarted
+  }
 
-  // Round Phases. Maybe refactor
+  // Round Phases
   case object Bidding extends Phase {
     override def toString: String = "Bidding"
     override def next: Phase = TakingCards
@@ -35,10 +37,5 @@ object Phase {
   case object RoundEnding extends Phase {
     override def toString: String = "Round Ending"
     override def next: Phase = Bidding
-  }
-
-  case object GameFinished extends Phase {
-    override def toString: String = "Game Finished"
-    override def next: Phase = WaitingForGameToStart
   }
 }

@@ -7,6 +7,35 @@ import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
 object MakeBid {
 
+  def apply(game: Game, bid: Int): Either[Error, Game] = for {
+    _ <- checkIfBiddingPhase(game)
+    activeIndex = game.round.activeIndex
+    activePlayer <- game.round.players.getE(activeIndex)
+    _ <- checkIfPassed(activePlayer)
+    _ <- checkIfPointsOver1000(game)
+    _ <- checkIfValidBid(game, bid)
+  } yield {
+
+    val nextToBidIndex = getNextToBidIndex(game, bid)
+
+    val phaseUpdated = if (nextToBidIndex.nonEmpty) game.phase else game.phase.next
+
+    val activeIndexUpdated = nextToBidIndex.getOrElse(activeIndex)
+
+    val highestBidUpdated = if (bid > game.round.highestBid) bid else game.round.highestBid
+
+    val activePlayerUpdated = activePlayer.copy(bid = bid)
+    val playersUpdated = game.round.players.updated(activeIndex, activePlayerUpdated)
+
+    val roundUpdated =
+      game.round.copy(activeIndex = activeIndexUpdated, highestBid = highestBidUpdated, players = playersUpdated)
+
+    game.copy(
+      phase = phaseUpdated,
+      round = roundUpdated,
+    )
+  }
+
   private def checkIfBiddingPhase(game: Game): Either[Error, Unit] =
     if (game.phase != Bidding)
       Left(Error(code = DefaultGameError, message = s"Bidding is not allowed in \"${game.phase}\" phase"))
@@ -54,35 +83,6 @@ object MakeBid {
         else if (bid >= 0) Some(game.round.activeIndex)
         else None
     } yield index
-  }
-
-  def apply(game: Game, bid: Int): Either[Error, Game] = for {
-    _ <- checkIfBiddingPhase(game)
-    activeIndex = game.round.activeIndex
-    activePlayer <- game.round.players.getE(activeIndex)
-    _ <- checkIfPassed(activePlayer)
-    _ <- checkIfPointsOver1000(game)
-    _ <- checkIfValidBid(game, bid)
-  } yield {
-
-    val nextToBidIndex = getNextToBidIndex(game, bid)
-
-    val phaseUpdated = if (nextToBidIndex.nonEmpty) game.phase else game.phase.next
-
-    val activeIndexUpdated = nextToBidIndex.getOrElse(activeIndex)
-
-    val highestBidUpdated = if (bid > game.round.highestBid) bid else game.round.highestBid
-
-    val activePlayerUpdated = activePlayer.copy(bid = bid)
-    val playersUpdated = game.round.players.updated(activeIndex, activePlayerUpdated)
-
-    val roundUpdated =
-      game.round.copy(activeIndex = activeIndexUpdated, highestBid = highestBidUpdated, players = playersUpdated)
-
-    game.copy(
-      phase = phaseUpdated,
-      round = roundUpdated,
-    )
   }
 
 }
