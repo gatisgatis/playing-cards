@@ -1,8 +1,8 @@
 package gatis.bigone.cardgames.game500.game.logic
 
 import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
-import gatis.bigone.cardgames.game500.game.domain.Phase.{Finished, RoundEnding}
-import gatis.bigone.cardgames.game500.game.domain.{Deck, Error, Game, Player, Round}
+import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, Finished, RoundEnding}
+import gatis.bigone.cardgames.game500.game.domain.{Error, Game, PlayerIndex, Result, Round}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
 object FinishRound {
@@ -17,14 +17,34 @@ object FinishRound {
     prevPlayer <- game.round.players.getE(prevIndex)
   } yield {
 
-    val a = determineRoundPoints(game, activePlayer)
-    val n = determineRoundPoints(game, nextPlayer)
-    val p = determineRoundPoints(game, prevPlayer)
+    val activePlayerPoints = determineRoundPoints(game, activeIndex, activePlayer.points)
+    val nextPlayerPoints = determineRoundPoints(game, nextIndex, nextPlayer.points)
+    val prevPlayerPoints = determineRoundPoints(game, prevIndex, prevPlayer.points)
 
-    // TODO update results
-    val resultsUpdated = game.results
-    // TODO figure out if game is finished
-    val isGameFinished = false
+    val roundPointsUpdated = Map(
+      activeIndex -> activePlayerPoints,
+      nextIndex -> nextPlayerPoints,
+      prevIndex -> prevPlayerPoints,
+    )
+
+    val gamePoints = game.results.last.gamePoints
+
+    val gamePointsUpdated = Map(
+      activeIndex -> (gamePoints(activeIndex) - activePlayerPoints),
+      nextIndex -> (gamePoints(nextIndex) - nextPlayerPoints),
+      prevIndex -> (gamePoints(prevIndex) - prevPlayerPoints),
+    )
+
+    val line = Result(
+      bid = Some(game.round.highestBid),
+      bigIndex = game.round.bigIndex,
+      roundPoints = roundPointsUpdated,
+      gamePoints = gamePointsUpdated,
+    )
+
+    val resultsUpdated = game.results :+ line
+
+    val isGameFinished = gamePointsUpdated.exists { case (_, points) => points <= 0 }
 
     if (isGameFinished) {
       game.copy(
@@ -38,7 +58,7 @@ object FinishRound {
       )
       game.copy(
         round = newRound,
-        phase = game.phase.next,
+        phase = Bidding,
         results = resultsUpdated,
       )
     }
@@ -50,18 +70,22 @@ object FinishRound {
       Left(Error(code = DefaultGameError, message = s"Bidding is not allowed in \"${game.phase}\" phase"))
     else Right(())
 
-  private def determineRoundPoints(game: Game, player: Player): Int = {
-    val points = player.points
-    if (game.round.biddingWinnerIndex.contains(player.index)) {
+  private[logic] def determineRoundPoints(game: Game, index: PlayerIndex, points: Int): Int =
+    if (game.round.bigIndex.contains(index)) {
       val highestBid = game.round.highestBid
       if (highestBid <= points) highestBid
       else -highestBid
     } else {
       val diffOfFive = points % 5
-      if (diffOfFive > 2) points - diffOfFive + 5
-      else points - diffOfFive
-      // TODO check if player's game points is under 100 from results...
+      val pointsRounded =
+        if (diffOfFive > 2) points - diffOfFive + 5
+        else points - diffOfFive
+      game.results.lastOption match {
+        case None => pointsRounded
+        case Some(line) =>
+          val gamePoints = line.gamePoints(index)
+          if (gamePoints < 100) 0 else pointsRounded
+      }
     }
-  }
 
 }

@@ -1,8 +1,8 @@
 package gatis.bigone.cardgames.game500.game.logic
 
 import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
-import gatis.bigone.cardgames.game500.game.domain.Phase.Bidding
-import gatis.bigone.cardgames.game500.game.domain.{Error, Game, Player, PlayerIndex}
+import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, TakingCards}
+import gatis.bigone.cardgames.game500.game.domain.{Error, Game, Player, PlayerIndex, Result}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
 object MakeBid {
@@ -12,23 +12,29 @@ object MakeBid {
     activeIndex = game.round.activeIndex
     activePlayer <- game.round.players.getE(activeIndex)
     _ <- checkIfPassed(activePlayer)
-    _ <- checkIfPointsOver1000(game)
+    _ <- checkIfPointsOver1000(game.results, activeIndex)
     _ <- checkIfValidBid(game, bid)
   } yield {
 
     val nextToBidIndex = getNextToBidIndex(game, bid)
 
-    val phaseUpdated = if (nextToBidIndex.nonEmpty) game.phase else game.phase.next
+    val phaseUpdated = if (nextToBidIndex.nonEmpty) game.phase else TakingCards
 
     val activeIndexUpdated = nextToBidIndex.getOrElse(activeIndex)
 
     val highestBidUpdated = if (bid > game.round.highestBid) bid else game.round.highestBid
 
+    val bigIndexUpdated = if (bid > game.round.highestBid) Some(activeIndex) else game.round.bigIndex
+
     val activePlayerUpdated = activePlayer.copy(bid = bid)
     val playersUpdated = game.round.players.updated(activeIndex, activePlayerUpdated)
 
-    val roundUpdated =
-      game.round.copy(activeIndex = activeIndexUpdated, highestBid = highestBidUpdated, players = playersUpdated)
+    val roundUpdated = game.round.copy(
+      activeIndex = activeIndexUpdated,
+      highestBid = highestBidUpdated,
+      bigIndex = bigIndexUpdated,
+      players = playersUpdated,
+    )
 
     game.copy(
       phase = phaseUpdated,
@@ -46,13 +52,13 @@ object MakeBid {
       Left(Error(code = DefaultGameError, message = s"${player.index} has already passed in this round"))
     else Right(())
 
-  private def checkIfPointsOver1000(game: Game): Either[Error, Unit] = {
-    val playerGamePoints = 123 // TODO. Get player's current points from game's results table
-    if (playerGamePoints >= 0)
+  private def checkIfPointsOver1000(results: List[Result], activeIndex: PlayerIndex): Either[Error, Unit] = {
+    val playerGamePoints = results.lastOption.map(_.gamePoints(activeIndex)).getOrElse(0)
+    if (playerGamePoints >= 1000)
       Left(
         Error(
           code = DefaultGameError,
-          message = s"${game.round.activeIndex} is not allowed to bid if total points above 1000.",
+          message = s"$activeIndex is not allowed to bid if total points above 1000.",
         ),
       )
     else Right(())

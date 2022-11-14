@@ -3,7 +3,7 @@ package gatis.bigone.cardgames.game500.game.logic
 import gatis.bigone.cardgames.common.cards.Rank.{King, Queen}
 import gatis.bigone.cardgames.common.cards.Suit
 import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
-import gatis.bigone.cardgames.game500.game.domain.Phase.PlayingCards
+import gatis.bigone.cardgames.game500.game.domain.Phase.{PlayingCards, RoundEnding}
 import gatis.bigone.cardgames.game500.game.domain.{Card, Error, Game}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
@@ -56,7 +56,7 @@ object PlayCard {
             players = playersUpdated,
           )
 
-          val phaseUpdated = if (activePlayerUpdated.cards.isEmpty) game.phase.next else game.phase
+          val phaseUpdated = if (activePlayerUpdated.cards.isEmpty) RoundEnding else game.phase
 
           game.copy(round = roundUpdated, phase = phaseUpdated)
         } else /* 2nd CARD PLAYED */

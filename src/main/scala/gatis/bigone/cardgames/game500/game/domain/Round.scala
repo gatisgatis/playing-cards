@@ -1,7 +1,7 @@
 package gatis.bigone.cardgames.game500.game.domain
 
 import gatis.bigone.cardgames.common.cards.Suit
-import gatis.bigone.cardgames.game500.game.domain.PlayerIndex.{FirstPlayer, SecondPlayer, ThirdPlayer}
+import gatis.bigone.cardgames.game500.game.domain.PlayerIndex._
 
 case class Round(
   roundNumber: Int,
@@ -12,7 +12,7 @@ case class Round(
   trumpSuit: Option[Suit] = None,
   highestBid: Int = 0,
   activeIndex: PlayerIndex = FirstPlayer,
-  biddingWinnerIndex: Option[PlayerIndex] = None,
+  bigIndex: Option[PlayerIndex] = None, // index of a player who won bidding and played as a BIG
   marriagePoints: Int = 0,
   canSmallMarriage: Boolean = false,
   startIndex: PlayerIndex = FirstPlayer, // when game starts, this should be selected at random

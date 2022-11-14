@@ -1,9 +1,21 @@
 package gatis.bigone.cardgames.game500.game.domain
 
-case class Result(value: String) {
-  def update(value: String): Result = Result(this.value + " " + value)
-}
+import gatis.bigone.cardgames.game500.game.domain.PlayerIndex._
+
+case class Result(
+  bid: Option[Int] = None,
+  bigIndex: Option[PlayerIndex] = None,
+  roundPoints: Map[PlayerIndex, Int] = Map.empty,
+  gamePoints: Map[PlayerIndex, Int],
+  quitter: Option[PlayerIndex] = None,
+)
 
 object Result {
-  def create(value: String = ""): Result = Result(value)
+  def init(initialPoints: Int = 500): Result = Result(
+    gamePoints = Map(
+      FirstPlayer -> initialPoints,
+      SecondPlayer -> initialPoints,
+      ThirdPlayer -> initialPoints,
+    ),
+  )
 }

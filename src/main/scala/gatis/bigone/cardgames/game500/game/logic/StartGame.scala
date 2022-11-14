@@ -2,7 +2,7 @@ package gatis.bigone.cardgames.game500.game.logic
 
 import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, NotStarted}
-import gatis.bigone.cardgames.game500.game.domain.{Deck, Error, Game, PlayerIndex, Result, Round}
+import gatis.bigone.cardgames.game500.game.domain.{Error, Game, PlayerIndex, Result, Round}
 import gatis.bigone.utils.Utils.SetOps
 
 object StartGame {
@@ -11,8 +11,7 @@ object StartGame {
     _ <- checkIfNotStartedPhase(game)
   } yield {
     val round = Round.create(startIndex = PlayerIndex.all.randomPick)
-    // TODO init results here. 500 points start
-    val result = Result.create("start results 500 points each")
+    val result = Result.init()
     game.copy(
       round = round,
       phase = Bidding,
