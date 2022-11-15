@@ -4,7 +4,7 @@ import gatis.bigone.cardgames.game500.game.domain.Phase.NotStarted
 
 import java.util.UUID
 
-case class Game(
+final case class Game(
   id: GameId,
   round: Round,
   phase: Phase,

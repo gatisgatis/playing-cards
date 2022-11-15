@@ -19,6 +19,7 @@ object Domain {
   case class TableId(value: String)
 
   case class TableInfo(
+    id: TableId,
     tableActor: ActorRef[Command],
     players: List[PlayerId],
     spectators: List[PlayerId] = Nil,
@@ -27,6 +28,9 @@ object Domain {
   )
 
   case class TablesFilter(playerId: Option[PlayerId], onlyWithFreeSeats: Boolean)
+
+  // Improve this...
+  case class ResponseError(value: String)
 
   case class Table(
     id: TableId,

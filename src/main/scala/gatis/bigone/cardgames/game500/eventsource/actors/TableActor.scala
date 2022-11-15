@@ -26,12 +26,12 @@ object TableActor {
         )
         Effect
           .persist(TableStarted(table))
-          .thenReply(replyTo)(_ => TempResponse("table started"))
+          .thenReply(replyTo)(_ => Right(TempResponse("table started")))
       case AddPlayer(_, playerId, timestamp, replyTo) =>
         // validation for this command handled at table manager level
         Effect
           .persist(PlayerJoined(timestamp, playerId))
-          .thenReply(replyTo)(_ => TempResponse("add player command handled"))
+          .thenReply(replyTo)(_ => Right(TempResponse("add player command handled")))
       case _ => ???
     }
 

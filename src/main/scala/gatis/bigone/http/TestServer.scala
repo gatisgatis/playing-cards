@@ -14,6 +14,10 @@ object TestServer extends ZIOAppDefault {
       case Method.GET -> _ / "info" => Response.json("""{"info": "No Info"}""")
     }
 
+  // receives all kind of requests. transfers them to according game server...
+
+  // comunication between this and game server is through imaginary protocol...
+
   def run: ZIO[Any & ZIOAppArgs & Scope, Throwable, Nothing] =
     Server.start(8090, app)
 }
