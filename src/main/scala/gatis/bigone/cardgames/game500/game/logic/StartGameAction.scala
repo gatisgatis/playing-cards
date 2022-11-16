@@ -1,13 +1,14 @@
 package gatis.bigone.cardgames.game500.game.logic
 
-import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, NotStarted}
-import gatis.bigone.cardgames.game500.game.domain.{Error, Game, PlayerIndex, Result, Round}
+import gatis.bigone.cardgames.game500.game.domain.{Game, PlayerIndex, Result, Round}
 import gatis.bigone.utils.Utils.SetOps
 
-object StartGame {
+object StartGameAction {
 
-  def apply(game: Game): Either[Error, Game] = for {
+  def apply(game: Game): Either[ErrorG500, Game] = for {
     _ <- checkIfNotStartedPhase(game)
   } yield {
     val round = Round.create(startIndex = PlayerIndex.all.randomPick)
@@ -19,9 +20,9 @@ object StartGame {
     )
   }
 
-  private def checkIfNotStartedPhase(game: Game): Either[Error, Unit] =
+  private def checkIfNotStartedPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.phase != NotStarted)
-      Left(Error(code = DefaultGameError, message = s"Cannot restart already started game"))
+      Left(DefaultGameError(msg = s"Cannot restart already started game"))
     else Right(())
 
 }

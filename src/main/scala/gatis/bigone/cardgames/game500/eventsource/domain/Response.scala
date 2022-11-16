@@ -33,18 +33,20 @@ object Response {
   case class StartRoundResponse(game: Game) extends Response
 
   // it could be optimised by sending only affected fields from Round
-  case class MakeBidResponse(round: Round, phase: Phase) extends Response
+  case class MakeBidResponse(game: Game) extends Response
 
-  case class TakeCardsResponse(round: Round, phase: Phase)
+  case class TakeCardsResponse(game: Game) extends Response
 
   case class GiveUpResponse(game: Game) extends Response
 
-  case class PassCards(round: Round, phase: Phase) extends Response
+  case class PassCardsResponse(game: Game) extends Response
 
-  case class PlayCardResponse(round: Round, phase: Phase) extends Response
+  case class PlayCardResponse(game: Game) extends Response
 
   case class FinishRoundResponse(game: Game) extends Response
 
   case class FinishGameResponse(game: Game) extends Response
+
+  case class RoundProgressResponse(game: Game) extends Response
 
 }

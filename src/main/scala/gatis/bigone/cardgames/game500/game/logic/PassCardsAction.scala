@@ -1,19 +1,20 @@
 package gatis.bigone.cardgames.game500.game.logic
 
-import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{PassingCards, PlayingCards}
-import gatis.bigone.cardgames.game500.game.domain.{Card, Error, Game}
+import gatis.bigone.cardgames.game500.game.domain.{Card, Game}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
-object PassCards {
+object PassCardsAction {
 
-  def apply(game: Game, cardToLeft: Card, cardToRight: Card): Either[Error, Game] = for {
+  def apply(game: Game, cardToLeft: Card, cardToRight: Card): Either[ErrorG500, Game] = for {
     _ <- checkIfPassingCardsPhase(game)
     activeIndex = game.round.activeIndex
     activePlayer <- game.round.players.getE(activeIndex)
     _ <-
       if (!activePlayer.cards.contains(cardToLeft) || !activePlayer.cards.contains(cardToRight))
-        Left(Error(code = DefaultGameError, message = "Does not have selected cards"))
+        Left(DefaultGameError(msg = "Does not have selected cards"))
       else Right(())
     leftPlayer <- game.round.players.getE(activeIndex.next)
     rightPlayer <- game.round.players.getE(activeIndex.previous)
@@ -35,9 +36,9 @@ object PassCards {
     game.copy(round = roundUpdated, phase = PlayingCards)
   }
 
-  private def checkIfPassingCardsPhase(game: Game): Either[Error, Unit] =
+  private def checkIfPassingCardsPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.phase != PassingCards)
-      Left(Error(code = DefaultGameError, message = "Cannot pass cards. No pass-cards phase now"))
+      Left(DefaultGameError(msg = "Cannot pass cards. No pass-cards phase now"))
     else Right(())
 
 }

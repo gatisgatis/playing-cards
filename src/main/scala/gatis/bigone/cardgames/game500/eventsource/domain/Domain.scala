@@ -29,9 +29,6 @@ object Domain {
 
   case class TablesFilter(playerId: Option[PlayerId], onlyWithFreeSeats: Boolean)
 
-  // Improve this...
-  case class ResponseError(value: String)
-
   case class Table(
     id: TableId,
     createdAt: Instant,

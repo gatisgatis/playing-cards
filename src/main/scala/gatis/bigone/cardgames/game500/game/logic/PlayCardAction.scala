@@ -2,14 +2,15 @@ package gatis.bigone.cardgames.game500.game.logic
 
 import gatis.bigone.cardgames.common.cards.Rank.{King, Queen}
 import gatis.bigone.cardgames.common.cards.Suit
-import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{PlayingCards, RoundEnding}
-import gatis.bigone.cardgames.game500.game.domain.{Card, Error, Game}
+import gatis.bigone.cardgames.game500.game.domain.{Card, Game}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
-object PlayCard {
+object PlayCardAction {
 
-  def apply(game: Game, card: Card): Either[Error, Game] = for {
+  def apply(game: Game, card: Card): Either[ErrorG500, Game] = for {
     _ <- checkIfPlayingCardsPhase(game)
     activeIndex = game.round.activeIndex
     activePlayer <- game.round.players.getE(activeIndex)
@@ -100,13 +101,13 @@ object PlayCard {
     }
   }
 
-  private def checkIfPlayingCardsPhase(game: Game): Either[Error, Unit] =
+  private def checkIfPlayingCardsPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.phase != PlayingCards)
-      Left(Error(code = DefaultGameError, message = "Cannot play card. No playing-cards phase now"))
+      Left(DefaultGameError(msg = "Cannot play card. No playing-cards phase now"))
     else Right(())
 
-  private def checkIfHasCard(cards: List[Card], card: Card): Either[Error, Unit] =
-    if (!cards.contains(card)) Left(Error(code = DefaultGameError, message = "Does not have a card"))
+  private def checkIfHasCard(cards: List[Card], card: Card): Either[ErrorG500, Unit] =
+    if (!cards.contains(card)) Left(DefaultGameError(msg = "Does not have a card"))
     else Right(())
 
   private def checkIfCardAllowedToPlay(
@@ -114,7 +115,7 @@ object PlayCard {
     requiredSuit: Option[Suit],
     cards: List[Card],
     card: Card,
-  ): Either[Error, Unit] = {
+  ): Either[ErrorG500, Unit] = {
     val allowedCards = requiredSuit match {
       case Some(rs) =>
         trumpSuit match {
@@ -130,7 +131,7 @@ object PlayCard {
         }
       case None => cards
     }
-    if (!allowedCards.contains(card)) Left(Error(code = DefaultGameError, message = "Not allowed to play this card"))
+    if (!allowedCards.contains(card)) Left(DefaultGameError(msg = "Not allowed to play this card"))
     else Right(())
   }
 

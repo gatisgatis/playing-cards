@@ -1,12 +1,13 @@
 package gatis.bigone.cardgames.game500.game.logic
 
-import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
-import gatis.bigone.cardgames.game500.game.domain.{Error, Game, Result, Round}
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
+import gatis.bigone.cardgames.game500.game.domain.{Game, Result, Round}
 import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, PassingCards}
-import gatis.bigone.cardgames.game500.game.logic.FinishRound.determineRoundPoints
+import gatis.bigone.cardgames.game500.game.logic.FinishRoundAction.determineRoundPoints
 
-object GiveUp {
-  def apply(game: Game): Either[Error, Game] = for {
+object GiveUpAction {
+  def apply(game: Game): Either[ErrorG500, Game] = for {
     _ <- checkIfValidPhase(game)
     _ <- checkIfPlayerIsAllowedToGiveUp(game)
     activeIndex = game.round.activeIndex
@@ -14,7 +15,7 @@ object GiveUp {
     prevIndex = activeIndex.previous
   } yield {
     // giving up is only allowed before passing cards
-    // giving up means - skip playing cards, 'BIG' loses and others get 50 each if allowed...
+    // giving up means - skip passing and playing cards, 'BIG' loses and others get 50 each
     val activePlayerPoints = determineRoundPoints(game, activeIndex, 0)
     val nextPlayerPoints = determineRoundPoints(game, activeIndex.next, 50)
     val prevPlayerPoints = determineRoundPoints(game, activeIndex.previous, 50)
@@ -52,14 +53,14 @@ object GiveUp {
 
   }
 
-  private def checkIfValidPhase(game: Game): Either[Error, Unit] =
+  private def checkIfValidPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.phase != PassingCards)
-      Left(Error(code = DefaultGameError, message = s"Giving Up is not allowed in \"${game.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Giving Up is not allowed in \"${game.phase}\" phase"))
     else Right(())
 
-  private def checkIfPlayerIsAllowedToGiveUp(game: Game): Either[Error, Unit] =
+  private def checkIfPlayerIsAllowedToGiveUp(game: Game): Either[ErrorG500, Unit] =
     if (!game.round.bigIndex.contains(game.round.activeIndex))
-      Left(Error(code = DefaultGameError, message = s"Only 'big' player can give up"))
+      Left(DefaultGameError(msg = s"Only 'big' player can give up"))
     else Right(())
 
 }

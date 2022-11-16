@@ -1,13 +1,14 @@
 package gatis.bigone.cardgames.game500.game.logic
 
-import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, TakingCards}
-import gatis.bigone.cardgames.game500.game.domain.{Error, Game, Player, PlayerIndex, Result}
+import gatis.bigone.cardgames.game500.game.domain.{Game, Player, PlayerIndex, Result}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
-object MakeBid {
+object MakeBidAction {
 
-  def apply(game: Game, bid: Int): Either[Error, Game] = for {
+  def apply(game: Game, bid: Int): Either[ErrorG500, Game] = for {
     _ <- checkIfBiddingPhase(game)
     activeIndex = game.round.activeIndex
     activePlayer <- game.round.players.getE(activeIndex)
@@ -42,40 +43,31 @@ object MakeBid {
     )
   }
 
-  private def checkIfBiddingPhase(game: Game): Either[Error, Unit] =
+  private def checkIfBiddingPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.phase != Bidding)
-      Left(Error(code = DefaultGameError, message = s"Bidding is not allowed in \"${game.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.phase}\" phase"))
     else Right(())
 
-  private def checkIfPassed(player: Player): Either[Error, Unit] =
-    if (player.bid < 0)
-      Left(Error(code = DefaultGameError, message = s"${player.index} has already passed in this round"))
+  private def checkIfPassed(player: Player): Either[ErrorG500, Unit] =
+    if (player.bid < 0) Left(DefaultGameError(msg = s"${player.index} has already passed in this round"))
     else Right(())
 
-  private def checkIfPointsOver1000(results: List[Result], activeIndex: PlayerIndex): Either[Error, Unit] = {
+  private def checkIfPointsOver1000(results: List[Result], activeIndex: PlayerIndex): Either[ErrorG500, Unit] = {
     val playerGamePoints = results.lastOption.map(_.gamePoints(activeIndex)).getOrElse(0)
     if (playerGamePoints >= 1000)
-      Left(
-        Error(
-          code = DefaultGameError,
-          message = s"$activeIndex is not allowed to bid if total points above 1000.",
-        ),
-      )
-    else Right(())
+      Left(DefaultGameError(msg = s"$activeIndex is not allowed to bid if total points above 1000."))
+    else
+      Right(())
   }
 
-  private def checkIfValidBid(game: Game, bid: Int): Either[Error, Unit] =
-    if (bid >= 0 && bid % 5 != 0) Left(Error(code = DefaultGameError, message = s"Bid must be with a step of 5"))
-    else if (bid >= 0 && bid < 60) Left(Error(code = DefaultGameError, message = "Bid must be greater or equal to 60"))
-    else if (bid > 205) Left(Error(code = DefaultGameError, message = "Bid is too high"))
+  private def checkIfValidBid(game: Game, bid: Int): Either[ErrorG500, Unit] =
+    if (bid >= 0 && bid % 5 != 0) Left(DefaultGameError(msg = s"Bid must be with a step of 5"))
+    else if (bid >= 0 && bid < 60) Left(DefaultGameError(msg = "Bid must be greater or equal to 60"))
+    else if (bid > 205) Left(DefaultGameError(msg = "Bid is too high"))
     else if (bid >= 0 && bid <= game.round.highestBid)
-      Left(
-        Error(
-          code = DefaultGameError,
-          message = s"Bid must be greater than bid form previous bidder (${game.round.highestBid})",
-        ),
-      )
-    else Right(())
+      Left(DefaultGameError(msg = s"Bid must be greater than bid form previous bidder (${game.round.highestBid})"))
+    else
+      Right(())
 
   private def getNextToBidIndex(game: Game, bid: Int): Option[PlayerIndex] = {
     val nextIndex = game.round.activeIndex.next

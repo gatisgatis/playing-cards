@@ -1,13 +1,14 @@
 package gatis.bigone.cardgames.game500.game.logic
 
-import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{PassingCards, TakingCards}
-import gatis.bigone.cardgames.game500.game.domain.{Error, Game}
+import gatis.bigone.cardgames.game500.game.domain.Game
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
-object TakeCards {
+object TakeCardsAction {
 
-  def apply(game: Game): Either[Error, Game] = for {
+  def apply(game: Game): Either[ErrorG500, Game] = for {
     _ <- checkIfTakingCardsPhase(game)
     activeIndex = game.round.activeIndex
     activePlayer <- game.round.players.getE(activeIndex)
@@ -19,9 +20,9 @@ object TakeCards {
     game.copy(phase = PassingCards, round = roundUpdated)
   }
 
-  private def checkIfTakingCardsPhase(game: Game): Either[Error, Unit] =
+  private def checkIfTakingCardsPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.phase != TakingCards)
-      Left(Error(code = DefaultGameError, message = s"Bidding is not allowed in \"${game.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.phase}\" phase"))
     else Right(())
 
 }

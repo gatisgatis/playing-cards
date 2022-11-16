@@ -6,10 +6,11 @@ import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import gatis.bigone.cardgames.game500.eventsource.domain.{Command, TableListNotAffectingCommand, TableSpecificCommand}
 import gatis.bigone.cardgames.game500.eventsource.domain.Command._
-import gatis.bigone.cardgames.game500.eventsource.domain.Domain.{ResponseError, TableId, TableInfo}
+import gatis.bigone.cardgames.game500.eventsource.domain.Domain.{TableId, TableInfo}
 import gatis.bigone.cardgames.game500.eventsource.domain.Event.{TableManagerEvent, TableSpecificEvent}
 import gatis.bigone.cardgames.game500.eventsource.domain.Event.TableManagerEvent._
 import gatis.bigone.cardgames.game500.eventsource.domain.Response.{CloseTableResponse, GetTablesResponse}
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 
 object TableManagerActor {
 
@@ -69,13 +70,13 @@ object TableManagerActor {
 
                 case _ =>
                   Effect.reply(tableSpecificCommand.replyTo)(
-                    Left(ResponseError(s"Unexpected table specific command: $tableSpecificCommand")),
+                    Left(DefaultGameError(msg = s"Unexpected table specific command: $tableSpecificCommand")),
                   )
               }
 
             case None =>
               Effect.reply(tableSpecificCommand.replyTo)(
-                Left(ResponseError(s"Table ${tableSpecificCommand.tableId} not found")),
+                Left(DefaultGameError(msg = s"Table ${tableSpecificCommand.tableId} not found")),
               )
           }
 
@@ -113,7 +114,7 @@ object TableManagerActor {
 
         case _ =>
           Effect.reply(command.replyTo)(
-            Left(ResponseError(s"Unexpected command: $command")),
+            Left(DefaultGameError(msg = s"Unexpected command: $command")),
           )
       }
   }

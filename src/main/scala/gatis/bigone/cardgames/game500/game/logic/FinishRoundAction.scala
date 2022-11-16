@@ -1,13 +1,14 @@
 package gatis.bigone.cardgames.game500.game.logic
 
-import gatis.bigone.cardgames.game500.game.domain.Code.DefaultGameError
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, Finished, RoundEnding}
-import gatis.bigone.cardgames.game500.game.domain.{Error, Game, PlayerIndex, Result, Round}
+import gatis.bigone.cardgames.game500.game.domain.{Game, PlayerIndex, Result, Round}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
-object FinishRound {
+object FinishRoundAction {
 
-  def apply(game: Game): Either[Error, Game] = for {
+  def apply(game: Game): Either[ErrorG500, Game] = for {
     _ <- checkIfRoundEndingPhase(game)
     activeIndex = game.round.activeIndex
     activePlayer <- game.round.players.getE(activeIndex)
@@ -65,9 +66,9 @@ object FinishRound {
 
   }
 
-  private def checkIfRoundEndingPhase(game: Game): Either[Error, Unit] =
+  private def checkIfRoundEndingPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.phase != RoundEnding)
-      Left(Error(code = DefaultGameError, message = s"Bidding is not allowed in \"${game.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.phase}\" phase"))
     else Right(())
 
   private[logic] def determineRoundPoints(game: Game, index: PlayerIndex, points: Int): Int =
