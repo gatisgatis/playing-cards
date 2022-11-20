@@ -2,7 +2,8 @@ package gatis.bigone.cardgames.game500.game.logic
 
 import gatis.bigone.cardgames.game500.ErrorG500
 import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
-import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, Finished, RoundEnding}
+import gatis.bigone.cardgames.game500.game.domain.Phase.RoundEnding
+import gatis.bigone.cardgames.game500.game.domain.Stage.Finished
 import gatis.bigone.cardgames.game500.game.domain.{Game, PlayerIndex, Result, Round}
 import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
@@ -47,28 +48,19 @@ object FinishRoundAction {
 
     val isGameFinished = gamePointsUpdated.exists { case (_, points) => points <= 0 }
 
+    val newRound = Round.create(startIndex = game.round.startIndex.next, number = game.round.number + 1)
+
     if (isGameFinished) {
-      game.copy(
-        phase = Finished,
-        results = resultsUpdated,
-      )
+      game.copy(stage = Finished, results = resultsUpdated)
     } else {
-      val newRound = Round.create(
-        roundNumber = game.round.roundNumber + 1,
-        startIndex = nextIndex,
-      )
-      game.copy(
-        round = newRound,
-        phase = Bidding,
-        results = resultsUpdated,
-      )
+      game.copy(results = resultsUpdated, round = newRound)
     }
 
   }
 
   private def checkIfRoundEndingPhase(game: Game): Either[ErrorG500, Unit] =
-    if (game.phase != RoundEnding)
-      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.phase}\" phase"))
+    if (game.round.phase != RoundEnding)
+      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.round.phase}\" phase"))
     else Right(())
 
   private[logic] def determineRoundPoints(game: Game, index: PlayerIndex, points: Int): Int =

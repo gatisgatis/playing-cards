@@ -19,7 +19,6 @@ object TableManagerActor {
   def commandHandler(context: ActorContext[Command]): (State, Command) => Effect[TableManagerEvent, State] = {
     (state: State, command: Command) =>
       command match {
-        // Handles commands which affects one specific table
         case tableSpecificCommand: TableSpecificCommand =>
           state.get(tableSpecificCommand.tableId) match {
             case Some(tableInfo) =>
@@ -80,8 +79,6 @@ object TableManagerActor {
               )
           }
 
-        // Handles not one specific table commands
-
         case GetTables(filter, replyTo) =>
           // TODO refactor this to look cleaner
           val filtered =
@@ -109,8 +106,6 @@ object TableManagerActor {
           Effect
             .persist(event)
             .thenReply(tableActor)(_ => command)
-
-        case UpdatePlayerOnlineStatus(tableIds, playerId, isOnline, timestamp, replyTo) => ??? // TODO implement
 
         case _ =>
           Effect.reply(command.replyTo)(

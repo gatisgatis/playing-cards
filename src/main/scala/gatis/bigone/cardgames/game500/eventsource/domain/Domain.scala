@@ -9,11 +9,15 @@ import java.time.Instant
 
 object Domain {
 
+  case class PlayerParams(
+    readyForGame: Boolean = false,
+    //    thinkingTime: Int = 0 // maybe something like this is needed here???
+    // maybe something else ???
+  )
+
   case class PlayerInfo(
     index: PlayerIndex,
-    agreedToStartGame: Boolean = false,
-    rating: String = "not-rated",
-    isOnline: Boolean = true,
+    params: PlayerParams = PlayerParams(),
   )
 
   case class TableId(value: String)
@@ -51,7 +55,7 @@ object Domain {
 
     def create(timestamp: Instant, tableId: TableId, creator: PlayerId): Table = {
       val game = Game.create()
-      val playerInfo = PlayerInfo(FirstPlayer)
+      val playerInfo = PlayerInfo(index = FirstPlayer)
       Table(
         id = tableId,
         createdAt = timestamp,

@@ -1,13 +1,15 @@
 package gatis.bigone.cardgames.game500.game.domain
 
-import gatis.bigone.cardgames.game500.game.domain.Phase.NotStarted
+import gatis.bigone.cardgames.game500.game.domain.Stage.UnStarted
 
 import java.util.UUID
+
+case class GameId(id: String) extends AnyVal
 
 final case class Game(
   id: GameId,
   round: Round,
-  phase: Phase,
+  stage: Stage,
   results: List[Result],
 )
 
@@ -15,8 +17,8 @@ object Game {
   def create(): Game =
     Game(
       id = GameId(UUID.randomUUID.toString),
-      round = Round(roundNumber = 0),
-      phase = NotStarted,
+      round = Round.empty,
+      stage = UnStarted,
       results = Nil,
     )
 }

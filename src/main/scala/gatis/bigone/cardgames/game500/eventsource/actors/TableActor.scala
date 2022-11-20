@@ -4,30 +4,36 @@ import akka.actor.typed.{ActorRef, Behavior}
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import gatis.bigone.cardgames.game500.ErrorG500
-import gatis.bigone.cardgames.game500.eventsource.domain.{Command, PlayerGameActionCommand, Response}
+import gatis.bigone.cardgames.game500.eventsource.domain.{Command, GameProgressCommand, PlayerSpecificCommand, Response}
 import gatis.bigone.cardgames.game500.eventsource.domain.Command._
 import gatis.bigone.cardgames.game500.eventsource.domain.Domain.{PlayerInfo, Table, TableId}
-import gatis.bigone.cardgames.game500.eventsource.domain.Event.{GameEvent, TableEvent}
+import gatis.bigone.cardgames.game500.eventsource.domain.Event.TableEvent
 import gatis.bigone.cardgames.game500.eventsource.domain.Event.TableEvent._
 import gatis.bigone.cardgames.game500.eventsource.domain.Response._
+import gatis.bigone.cardgames.game500.game.domain.Action._
 import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
-import gatis.bigone.cardgames.game500.game.domain.Game
+import gatis.bigone.cardgames.game500.game.domain.{Action, Game}
 import gatis.bigone.cardgames.game500.game.logic.{
   FinishRoundAction,
   GiveUpAction,
   MakeBidAction,
   PassCardsAction,
   PlayCardAction,
+  StartGameAction,
+  StartRoundAction,
   TakeCardsAction,
 }
-import gatis.bigone.utils.Utils.SetOps
+import gatis.bigone.utils.Utils.{ListOps, SetOps}
 
 import java.time.Instant
 
 object TableActor {
 
-  private def handleRoundProgressCommand(
+  type State = Table
+
+  private def handleGameProgressCommand(
     game: Either[ErrorG500, Game],
+    action: Action,
     timestamp: Instant,
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ): Effect[TableEvent, State] =
@@ -36,11 +42,9 @@ object TableActor {
         Effect.reply(replyTo)(Left(error))
       case Right(gameUpdated) =>
         Effect
-          .persist(GameActionMadeEvent(timestamp, gameUpdated))
-          .thenReply(replyTo)(_ => Right(RoundProgressResponse(gameUpdated)))
+          .persist(GameProgressEvent(timestamp, gameUpdated, action))
+          .thenReply(replyTo)(_ => Right(GameProgressResponse(gameUpdated)))
     }
-
-  type State = Table
 
   val commandHandler: (State, Command) => Effect[TableEvent, State] = (state: State, command: Command) =>
     command match {
@@ -77,71 +81,102 @@ object TableActor {
           .persist(SpectatorLeft(playerId))
           .thenReply(replyTo)(_ => Right(RemoveSpectatorResponse(playerId)))
 
-      case UpdatePlayerOnlineStatus(_, playerId, isOnline, timestamp, replyTo) =>
+      case UpdatePlayerParams(_, playerId, params, timestamp, replyTo) =>
         Effect
-          .persist(PlayerStatusUpdated(timestamp, playerId, isOnline))
-          .thenReply(replyTo)(_ => Right(UpdatePlayerOnlineStatusResponse(playerId, isOnline)))
+          .persist(PlayerParamsUpdated(timestamp, playerId, params))
+          .thenReply(replyTo)(_ => Right(UpdatePlayerParamsResponse(playerId, params)))
 
-      case AgreeToStartGame(_, playerId, timestamp, replyTo) =>
-        Effect
-          .persist(AgreedToStartGame(timestamp, playerId))
-          .thenReply(replyTo)(_ => Right(AgreeToStartGameResponse(playerId)))
-
-      case pgaCommand: PlayerGameActionCommand =>
-        state.players.get(pgaCommand.playerId) match {
+      case psProgressCmd: PlayerSpecificCommand with GameProgressCommand =>
+        state.players.get(psProgressCmd.playerId) match {
           case Some(playerInfo) if playerInfo.index == state.game.round.activeIndex =>
-            pgaCommand match {
+            psProgressCmd match {
               case MakeBid(_, _, bid, timestamp, replyTo) =>
-                handleRoundProgressCommand(
-                  game = MakeBidAction(state.game, bid),
+                handleGameProgressCommand(
+                  game = MakeBidAction.apply(state.game, bid),
                   timestamp = timestamp,
                   replyTo = replyTo,
+                  action = BidMade,
                 )
 
               case TakeCards(_, _, timestamp, replyTo) =>
-                handleRoundProgressCommand(
-                  game = TakeCardsAction(state.game),
+                handleGameProgressCommand(
+                  game = TakeCardsAction.apply(state.game),
                   timestamp = timestamp,
                   replyTo = replyTo,
+                  action = CardsTaken,
                 )
 
               case GiveUp(_, _, timestamp, replyTo) =>
-                handleRoundProgressCommand(
-                  game = GiveUpAction(state.game),
+                handleGameProgressCommand(
+                  game = GiveUpAction.apply(state.game),
                   timestamp = timestamp,
                   replyTo = replyTo,
+                  action = GaveUp,
                 )
 
               case PassCards(_, _, leftCard, rightCard, timestamp, replyTo) =>
-                handleRoundProgressCommand(
-                  game = PassCardsAction(state.game, leftCard, rightCard),
+                handleGameProgressCommand(
+                  game = PassCardsAction.apply(state.game, leftCard, rightCard),
                   timestamp = timestamp,
                   replyTo = replyTo,
+                  action = CardsPassed,
                 )
 
               case PlayCard(_, _, card, timestamp, replyTo) =>
-                handleRoundProgressCommand(
-                  game = PlayCardAction(state.game, card),
+                handleGameProgressCommand(
+                  game = PlayCardAction.apply(state.game, card),
                   timestamp = timestamp,
                   replyTo = replyTo,
+                  action = CardPlayed,
                 )
 
             }
           case None =>
-            Effect.reply(pgaCommand.replyTo)(Left(DefaultGameError(msg = "This player is not at this table")))
-          case _ => Effect.reply(pgaCommand.replyTo)(Left(DefaultGameError(msg = "Not player's turn")))
+            Effect.reply(psProgressCmd.replyTo)(Left(DefaultGameError(msg = "This player is not at this table")))
+          case _ => Effect.reply(psProgressCmd.replyTo)(Left(DefaultGameError(msg = "Not player's turn")))
         }
 
-      case StartRound(tableId, timestamp, replyTo) => ???
-
-      case FinishRound(_, timestamp, replyTo) =>
-        handleRoundProgressCommand(
-          game = FinishRoundAction(state.game),
+      case StartGame(_, timestamp, replyTo) =>
+        val gameUpdated: Either[ErrorG500, Game] = for {
+          _ <-
+            if (state.players.size == 3) Right(())
+            else Left(DefaultGameError(msg = "Cannot start game with less than 3 players"))
+          _ <-
+            if (state.players.values.forall(_.params.readyForGame)) Right(())
+            else Left(DefaultGameError(msg = "Not all agreed"))
+          game <- StartGameAction.apply(game = state.game)
+        } yield game
+        handleGameProgressCommand(
+          game = gameUpdated,
           timestamp = timestamp,
           replyTo = replyTo,
+          action = GameStarted,
         )
+
+      case StartRound(_, timestamp, replyTo) =>
+        handleGameProgressCommand(
+          game = StartRoundAction.apply(state.game),
+          timestamp = timestamp,
+          replyTo = replyTo,
+          action = RoundStarted,
+        )
+
+      case FinishRound(_, timestamp, replyTo) =>
+        handleGameProgressCommand(
+          game = FinishRoundAction.apply(state.game),
+          timestamp = timestamp,
+          replyTo = replyTo,
+          action = RoundFinished,
+        )
+
+      case FinishGame(tableId, timestamp, replyTo) => ??? // TODO
+      // should change playerinfo - agreed to false for all
+      // ends with GameProgressEvent and action=GameFinished
+
+      case _ => Effect.reply(command.replyTo)(Left(DefaultGameError(msg = s"unexpected command: $command")))
     }
 
+  // TODO handle other events
   val eventHandler: (Table, TableEvent) => Table = (state: Table, event: TableEvent) =>
     event match {
       case TableStarted(table) =>
@@ -151,11 +186,26 @@ object TableActor {
         val playerInfo = PlayerInfo(index = index)
         val players = state.players.updated(playerId, playerInfo)
         state.copy(lastActivity = timestamp, players = players)
-      case gameEvent: GameEvent =>
+      case PlayerLeft(timestamp, playerId) =>
+        val playersUpdated = state.players.removed(playerId)
+        state.copy(lastActivity = timestamp, players = playersUpdated)
+      case SpectatorJoined(playerId) =>
+        val spectatorsUpdated = state.spectators :+ playerId
+        state.copy(spectators = spectatorsUpdated)
+      case SpectatorLeft(playerId) =>
+        val spectatorsUpdated = state.spectators.remove(playerId)
+        state.copy(spectators = spectatorsUpdated)
+      case PlayerParamsUpdated(timestamp, playerId, params) =>
+        val infoUpdated = state.players(playerId).copy(params = params)
+        val playersUpdated = state.players.updated(playerId, infoUpdated)
+        state.copy(lastActivity = timestamp, players = playersUpdated)
+      case gameProgressEvent: GameProgressEvent =>
         state.copy(
-          game = gameEvent.game,
-          lastActivity = gameEvent.timestamp,
+          game = gameProgressEvent.game,
+          lastActivity = gameProgressEvent.timestamp,
         )
+
+      case _ => state // should log something about unexpected event etc...
 
     }
 

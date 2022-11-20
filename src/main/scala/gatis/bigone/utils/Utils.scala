@@ -12,4 +12,8 @@ object Utils {
     }
   }
 
+  implicit class ListOps[A](list: List[A]) {
+    def remove(el: A): List[A] = list.diff(List(el))
+  }
+
 }

@@ -19,7 +19,7 @@ object MakeBidAction {
 
     val nextToBidIndex = getNextToBidIndex(game, bid)
 
-    val phaseUpdated = if (nextToBidIndex.nonEmpty) game.phase else TakingCards
+    val phaseUpdated = if (nextToBidIndex.nonEmpty) Bidding else TakingCards
 
     val activeIndexUpdated = nextToBidIndex.getOrElse(activeIndex)
 
@@ -31,21 +31,19 @@ object MakeBidAction {
     val playersUpdated = game.round.players.updated(activeIndex, activePlayerUpdated)
 
     val roundUpdated = game.round.copy(
+      phase = phaseUpdated,
       activeIndex = activeIndexUpdated,
       highestBid = highestBidUpdated,
       bigIndex = bigIndexUpdated,
       players = playersUpdated,
     )
 
-    game.copy(
-      phase = phaseUpdated,
-      round = roundUpdated,
-    )
+    game.copy(round = roundUpdated)
   }
 
   private def checkIfBiddingPhase(game: Game): Either[ErrorG500, Unit] =
-    if (game.phase != Bidding)
-      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.phase}\" phase"))
+    if (game.round.phase != Bidding)
+      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.round.phase}\" phase"))
     else Right(())
 
   private def checkIfPassed(player: Player): Either[ErrorG500, Unit] =

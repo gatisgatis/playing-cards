@@ -49,7 +49,10 @@ object PlayCardAction {
             .updated(activeIndex, activePlayerUpdated)
             .updated(playerTakingTrickUpdated.index, playerTakingTrickUpdated)
 
+          val phaseUpdated = if (activePlayerUpdated.cards.isEmpty) RoundEnding else PlayingCards
+
           val roundUpdated = game.round.copy(
+            phase = phaseUpdated,
             cardsOnBoard = Nil,
             previousTrick = cardsOnBoardUpdated,
             requiredSuit = None,
@@ -57,9 +60,7 @@ object PlayCardAction {
             players = playersUpdated,
           )
 
-          val phaseUpdated = if (activePlayerUpdated.cards.isEmpty) RoundEnding else game.phase
-
-          game.copy(round = roundUpdated, phase = phaseUpdated)
+          game.copy(round = roundUpdated)
         } else /* 2nd CARD PLAYED */
           {
             val playersUpdated = game.round.players.updated(activeIndex, activePlayerUpdated)
@@ -102,7 +103,7 @@ object PlayCardAction {
   }
 
   private def checkIfPlayingCardsPhase(game: Game): Either[ErrorG500, Unit] =
-    if (game.phase != PlayingCards)
+    if (game.round.phase != PlayingCards)
       Left(DefaultGameError(msg = "Cannot play card. No playing-cards phase now"))
     else Right(())
 

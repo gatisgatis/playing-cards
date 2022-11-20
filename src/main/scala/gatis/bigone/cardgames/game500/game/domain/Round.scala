@@ -1,10 +1,12 @@
 package gatis.bigone.cardgames.game500.game.domain
 
 import gatis.bigone.cardgames.common.cards.Suit
+import gatis.bigone.cardgames.game500.game.domain.Phase.NotStarted
 import gatis.bigone.cardgames.game500.game.domain.PlayerIndex._
 
 case class Round(
-  roundNumber: Int,
+  number: Int,
+  phase: Phase = NotStarted,
   cardsOnBoard: List[Card] = Nil,
   previousTrick: List[Card] = Nil,
   requiredSuit: Option[Suit] = None,
@@ -20,9 +22,9 @@ case class Round(
 )
 
 object Round {
-  val empty: Round = Round(roundNumber = 0)
+  val empty: Round = Round(number = 0)
 
-  def create(startIndex: PlayerIndex = FirstPlayer, roundNumber: Int = 1): Round = {
+  def create(startIndex: PlayerIndex, number: Int = 1): Round = {
     val deck = Deck.shuffled
     val cardsToTake = deck.slice(0, 3)
     val player1 = Player.create(playerIndex = FirstPlayer, cards = deck.slice(3, 10))
@@ -32,7 +34,7 @@ object Round {
     Round(
       cardsToTake = cardsToTake,
       players = players,
-      roundNumber = roundNumber,
+      number = number,
       activeIndex = startIndex,
       startIndex = startIndex,
     )

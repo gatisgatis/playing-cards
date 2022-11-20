@@ -16,13 +16,17 @@ object TakeCardsAction {
     val cardsUpdated = activePlayer.cards ::: game.round.cardsToTake
     val playerUpdated = activePlayer.copy(cards = cardsUpdated)
     val playersUpdated = game.round.players.updated(activeIndex, playerUpdated)
-    val roundUpdated = game.round.copy(players = playersUpdated, cardsToTake = Nil)
-    game.copy(phase = PassingCards, round = roundUpdated)
+    val roundUpdated = game.round.copy(
+      phase = PassingCards,
+      players = playersUpdated,
+      cardsToTake = Nil,
+    )
+    game.copy(round = roundUpdated)
   }
 
   private def checkIfTakingCardsPhase(game: Game): Either[ErrorG500, Unit] =
-    if (game.phase != TakingCards)
-      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.phase}\" phase"))
+    if (game.round.phase != TakingCards)
+      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.round.phase}\" phase"))
     else Right(())
 
 }

@@ -2,29 +2,21 @@ package gatis.bigone.cardgames.game500.eventsource.domain
 
 import akka.actor.typed.ActorRef
 import gatis.bigone.cardgames.game500.ErrorG500
-import gatis.bigone.cardgames.game500.eventsource.domain.Domain.{TableId, TablesFilter}
+import gatis.bigone.cardgames.game500.eventsource.domain.Domain.{PlayerParams, TableId, TablesFilter}
 import gatis.bigone.cardgames.game500.game.domain.Card
 import gatis.bigone.domain.PlayerId
 
 import java.time.Instant
 
-trait Command {
-  val replyTo: ActorRef[Either[ErrorG500, Response]]
-}
+trait Command { val replyTo: ActorRef[Either[ErrorG500, Response]] }
 
-trait TableSpecificCommand {
-  val tableId: TableId
-}
+trait TableSpecificCommand { val tableId: TableId }
 
 trait TableListNotAffectingCommand
 
-trait PlayerGameActionCommand {
-  val playerId: PlayerId
-}
+trait PlayerSpecificCommand { val playerId: PlayerId }
 
-trait RoundProgressCommand {
-  val timestamp: Instant
-}
+trait GameProgressCommand { val timestamp: Instant }
 
 object Command {
 
@@ -34,6 +26,7 @@ object Command {
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
       with TableSpecificCommand
+      with PlayerSpecificCommand
 
   case class GetTables(
     filter: TablesFilter,
@@ -47,6 +40,7 @@ object Command {
     timestamp: Instant,
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
+      with PlayerSpecificCommand
 
   case class CloseTable(
     tableId: TableId,
@@ -54,6 +48,7 @@ object Command {
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
       with TableSpecificCommand
+      with PlayerSpecificCommand
 
   case class AddPlayer(
     tableId: TableId,
@@ -62,6 +57,7 @@ object Command {
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
       with TableSpecificCommand
+      with PlayerSpecificCommand
 
   case class RemovePlayer(
     tableId: TableId,
@@ -70,6 +66,7 @@ object Command {
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
       with TableSpecificCommand
+      with PlayerSpecificCommand
 
   case class AddSpectator(
     tableId: TableId,
@@ -77,6 +74,7 @@ object Command {
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
       with TableSpecificCommand
+      with PlayerSpecificCommand
 
   case class RemoveSpectator(
     tableId: TableId,
@@ -84,26 +82,20 @@ object Command {
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
       with TableSpecificCommand
+      with PlayerSpecificCommand
 
-  case class UpdatePlayerOnlineStatus(
-    // if player logs out, front-end client should send request for all tables where player is present...
-    tableIds: List[TableId],
-    playerId: PlayerId,
-    isOnline: Boolean,
-    timestamp: Instant,
-    replyTo: ActorRef[Either[ErrorG500, Response]],
-  ) extends Command
-
-  case class AgreeToStartGame(
+  case class UpdatePlayerParams(
     tableId: TableId,
     playerId: PlayerId,
+    params: PlayerParams,
     timestamp: Instant,
     replyTo: ActorRef[Either[ErrorG500, Response]],
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
+      with PlayerSpecificCommand
 
-  // auto-called by table-actor. Or maybe only Event auto produced...?
+  // auto-called by table-actor?
   case class StartGame(
     tableId: TableId,
     timestamp: Instant,
@@ -111,8 +103,9 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
+      with GameProgressCommand
 
-  // auto-called by table-actor
+  // auto-called by table-actor?
   case class StartRound(
     tableId: TableId,
     timestamp: Instant,
@@ -120,7 +113,7 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
-      with RoundProgressCommand
+      with GameProgressCommand
 
   case class MakeBid(
     tableId: TableId,
@@ -131,8 +124,8 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
-      with PlayerGameActionCommand
-      with RoundProgressCommand
+      with PlayerSpecificCommand
+      with GameProgressCommand
 
   case class TakeCards(
     tableId: TableId,
@@ -142,10 +135,10 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
-      with PlayerGameActionCommand
-      with RoundProgressCommand
+      with PlayerSpecificCommand
+      with GameProgressCommand
 
-  case class GiveUp( // other players gets 50/50, you loose.
+  case class GiveUp(
     tableId: TableId,
     playerId: PlayerId,
     timestamp: Instant,
@@ -153,8 +146,8 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
-      with PlayerGameActionCommand
-      with RoundProgressCommand
+      with PlayerSpecificCommand
+      with GameProgressCommand
 
   case class PassCards(
     tableId: TableId,
@@ -166,8 +159,8 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
-      with PlayerGameActionCommand
-      with RoundProgressCommand
+      with PlayerSpecificCommand
+      with GameProgressCommand
 
   case class PlayCard(
     tableId: TableId,
@@ -178,8 +171,8 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
-      with PlayerGameActionCommand
-      with RoundProgressCommand
+      with PlayerSpecificCommand
+      with GameProgressCommand
 
   // auto called by table-actor
   case class FinishRound(
@@ -189,9 +182,10 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
-      with RoundProgressCommand
+      with GameProgressCommand
 
-//  auto-called by table-actor, when this happens, send game result somewhere for statistics....
+//  auto-called by table-actor,
+//  when this happens, send game result somewhere for statistics.... send results to elo service or smth...
   case class FinishGame(
     tableId: TableId,
     timestamp: Instant,
@@ -199,4 +193,5 @@ object Command {
   ) extends Command
       with TableSpecificCommand
       with TableListNotAffectingCommand
+      with GameProgressCommand
 }

@@ -31,13 +31,16 @@ object PassCardsAction {
       activeIndex.next -> leftPlayerUpdated,
       activeIndex.previous -> rightPlayerUpdated,
     )
-    val roundUpdated = game.round.copy(players = playersUpdated)
+    val roundUpdated = game.round.copy(
+      phase = PlayingCards,
+      players = playersUpdated,
+    )
 
-    game.copy(round = roundUpdated, phase = PlayingCards)
+    game.copy(round = roundUpdated)
   }
 
   private def checkIfPassingCardsPhase(game: Game): Either[ErrorG500, Unit] =
-    if (game.phase != PassingCards)
+    if (game.round.phase != PassingCards)
       Left(DefaultGameError(msg = "Cannot pass cards. No pass-cards phase now"))
     else Right(())
 
