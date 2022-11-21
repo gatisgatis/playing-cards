@@ -3,8 +3,8 @@ package gatis.bigone.cardgames.game500.game.logic
 import gatis.bigone.cardgames.game500.ErrorG500
 import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{PassingCards, PlayingCards}
+import gatis.bigone.cardgames.game500.game.domain.Round.PlayersOps
 import gatis.bigone.cardgames.game500.game.domain.{Card, Game}
-import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
 object PassCardsAction {
 

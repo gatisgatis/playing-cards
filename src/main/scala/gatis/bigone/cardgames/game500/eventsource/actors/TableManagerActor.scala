@@ -24,17 +24,20 @@ object TableManagerActor {
             case Some(tableInfo) =>
               tableSpecificCommand match {
                 case CloseTable(tableId, playerId, replyTo) =>
-                  // TODO add validation
-                  // before persisting this event we must be sure that this command won't fail at table actor...
-                  // this command should be auto-called when 3rd player lefts table or table admin closes it manually
-                  val event = TableClosed(tableId = tableId)
-                  Effect
-                    .persist(event)
-                    .thenReply(replyTo)(_ => Right(CloseTableResponse))
+                  if (tableInfo.admin == playerId || tableInfo.players.isEmpty) {
+                    val event = TableClosed(tableId = tableId)
+                    Effect
+                      .persist(event)
+                      .thenReply(replyTo)(_ => Right(CloseTableResponse))
+                  } else {
+                    Effect.reply(replyTo)(Left(DefaultGameError(msg = s"not allowed to close table")))
+                  }
 
                 case AddPlayer(tableId, playerId, _, _) =>
                   // TODO add validation
                   // before persisting this event we must be sure that this command won't fail at table actor...
+                  // is there a free seat at table
+                  // isn't this player already at the table
                   val event = PlayerAdded(tableId = tableId, playerId = playerId)
                   Effect
                     .persist(event)
@@ -43,6 +46,8 @@ object TableManagerActor {
                 case RemovePlayer(tableId, playerId, _, _) =>
                   // TODO add validation
                   // before persisting this event we must be sure that this command won't fail at table actor...
+                  // is this player at the table?
+                  // if last player then also TableClosed event?
                   val event = PlayerRemoved(tableId = tableId, playerId = playerId)
                   Effect
                     .persist(event)
@@ -51,6 +56,7 @@ object TableManagerActor {
                 case AddSpectator(tableId, playerId, _) =>
                   // TODO add validation
                   // before persisting this event we must be sure that this command won't fail at table actor...
+                  // check if that spectator already exist
                   val event = SpectatorAdded(tableId = tableId, playerId = playerId)
                   Effect
                     .persist(event)
@@ -59,6 +65,7 @@ object TableManagerActor {
                 case RemoveSpectator(tableId, playerId, _) =>
                   // TODO add validation
                   // before persisting this event we must be sure that this command won't fail at table actor...
+                  // check if there is a spectator to remove...
                   val event = SpectatorRemoved(tableId = tableId, playerId = playerId)
                   Effect
                     .persist(event)
@@ -128,6 +135,7 @@ object TableManagerActor {
                   val players = tableInfo.players :+ playerId
                   state.updated(tableId, tableInfo.copy(players = players))
                 case PlayerRemoved(tableId, playerId) =>
+                  // TODO. if admin leaves, change admin..?
                   val players = tableInfo.players.filterNot(_ == playerId)
                   state.updated(tableId, tableInfo.copy(players = players))
                 case SpectatorAdded(tableId, playerId) =>
@@ -149,6 +157,7 @@ object TableManagerActor {
             id = tableId,
             tableActor = tableActor,
             players = List(playerId),
+            admin = playerId,
             isPrivate = isPrivate,
             createdAt = timestamp,
           )

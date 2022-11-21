@@ -1,18 +1,19 @@
 package gatis.bigone.cardgames.game500.eventsource.actors
 
-import akka.actor.typed.{ActorRef, Behavior}
+import akka.actor.typed.Behavior
 import akka.persistence.typed.PersistenceId
 import akka.persistence.typed.scaladsl.{Effect, EventSourcedBehavior}
 import gatis.bigone.cardgames.game500.ErrorG500
-import gatis.bigone.cardgames.game500.eventsource.domain.{Command, GameProgressCommand, PlayerSpecificCommand, Response}
+import gatis.bigone.cardgames.game500.eventsource.domain.{Command, GameProgressCommand, PlayerSpecificCommand}
 import gatis.bigone.cardgames.game500.eventsource.domain.Command._
 import gatis.bigone.cardgames.game500.eventsource.domain.Domain.{PlayerInfo, Table, TableId}
 import gatis.bigone.cardgames.game500.eventsource.domain.Event.TableEvent
 import gatis.bigone.cardgames.game500.eventsource.domain.Event.TableEvent._
 import gatis.bigone.cardgames.game500.eventsource.domain.Response._
+import gatis.bigone.cardgames.game500.eventsource.logic.TableHelpers.handleGameProgressCommand
 import gatis.bigone.cardgames.game500.game.domain.Action._
 import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
-import gatis.bigone.cardgames.game500.game.domain.{Action, Game}
+import gatis.bigone.cardgames.game500.game.domain.Game
 import gatis.bigone.cardgames.game500.game.logic.{
   FinishRoundAction,
   GiveUpAction,
@@ -25,26 +26,9 @@ import gatis.bigone.cardgames.game500.game.logic.{
 }
 import gatis.bigone.utils.Utils.{ListOps, SetOps}
 
-import java.time.Instant
-
 object TableActor {
 
   type State = Table
-
-  private def handleGameProgressCommand(
-    game: Either[ErrorG500, Game],
-    action: Action,
-    timestamp: Instant,
-    replyTo: ActorRef[Either[ErrorG500, Response]],
-  ): Effect[TableEvent, State] =
-    game match {
-      case Left(error) =>
-        Effect.reply(replyTo)(Left(error))
-      case Right(gameUpdated) =>
-        Effect
-          .persist(GameProgressEvent(timestamp, gameUpdated, action))
-          .thenReply(replyTo)(_ => Right(GameProgressResponse(gameUpdated)))
-    }
 
   val commandHandler: (State, Command) => Effect[TableEvent, State] = (state: State, command: Command) =>
     command match {
@@ -176,7 +160,6 @@ object TableActor {
       case _ => Effect.reply(command.replyTo)(Left(DefaultGameError(msg = s"unexpected command: $command")))
     }
 
-  // TODO handle other events
   val eventHandler: (Table, TableEvent) => Table = (state: Table, event: TableEvent) =>
     event match {
       case TableStarted(table) =>
@@ -205,7 +188,7 @@ object TableActor {
           lastActivity = gameProgressEvent.timestamp,
         )
 
-      case _ => state // should log something about unexpected event etc...
+      case _ => state // TODO should log something about unexpected event etc... create unexpected method
 
     }
 

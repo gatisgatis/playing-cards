@@ -4,7 +4,7 @@ import gatis.bigone.cardgames.game500.ErrorG500
 import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{PassingCards, TakingCards}
 import gatis.bigone.cardgames.game500.game.domain.Game
-import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
+import gatis.bigone.cardgames.game500.game.domain.Round.PlayersOps
 
 object TakeCardsAction {
 

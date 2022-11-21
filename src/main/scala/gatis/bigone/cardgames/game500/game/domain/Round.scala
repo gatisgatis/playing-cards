@@ -1,6 +1,8 @@
 package gatis.bigone.cardgames.game500.game.domain
 
 import gatis.bigone.cardgames.common.cards.Suit
+import gatis.bigone.cardgames.game500.ErrorG500
+import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.NotStarted
 import gatis.bigone.cardgames.game500.game.domain.PlayerIndex._
 
@@ -14,7 +16,7 @@ case class Round(
   trumpSuit: Option[Suit] = None,
   highestBid: Int = 0,
   activeIndex: PlayerIndex = FirstPlayer,
-  bigIndex: Option[PlayerIndex] = None, // index of a player who won bidding and played as a BIG
+  bigIndex: Option[PlayerIndex] = None, // index of a player who won bidding and plays as a BIG
   marriagePoints: Int = 0,
   canSmallMarriage: Boolean = false,
   startIndex: PlayerIndex = FirstPlayer, // when game starts, this should be selected at random
@@ -22,6 +24,12 @@ case class Round(
 )
 
 object Round {
+
+  implicit class PlayersOps(map: Map[PlayerIndex, Player]) {
+    def getE(key: PlayerIndex): Either[ErrorG500, Player] =
+      map.get(key).toRight(DefaultGameError(msg = s"Could not find value for key $key"))
+  }
+
   val empty: Round = Round(number = 0)
 
   def create(startIndex: PlayerIndex, number: Int = 1): Round = {

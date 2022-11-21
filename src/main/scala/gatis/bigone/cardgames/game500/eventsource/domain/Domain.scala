@@ -27,6 +27,7 @@ object Domain {
     tableActor: ActorRef[Command],
     players: List[PlayerId],
     spectators: List[PlayerId] = Nil,
+    admin: PlayerId = PlayerId.empty,
     createdAt: Instant,
     isPrivate: Boolean = false,
   )
@@ -39,7 +40,6 @@ object Domain {
     lastActivity: Instant,
     players: Map[PlayerId, PlayerInfo] = Map.empty,
     spectators: List[PlayerId] = Nil,
-    admin: PlayerId = PlayerId.empty,
     game: Game,
   ) {
     def availablePlayerIndexes: Set[PlayerIndex] = PlayerIndex.all -- players.values.map(_.index).toSet
@@ -61,7 +61,6 @@ object Domain {
         createdAt = timestamp,
         lastActivity = timestamp,
         players = Map(creator -> playerInfo),
-        admin = creator,
         game = game,
       )
     }

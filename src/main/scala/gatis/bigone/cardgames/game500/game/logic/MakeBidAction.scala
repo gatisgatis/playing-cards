@@ -3,8 +3,8 @@ package gatis.bigone.cardgames.game500.game.logic
 import gatis.bigone.cardgames.game500.ErrorG500
 import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.{Bidding, TakingCards}
+import gatis.bigone.cardgames.game500.game.domain.Round.PlayersOps
 import gatis.bigone.cardgames.game500.game.domain.{Game, Player, PlayerIndex, Result}
-import gatis.bigone.cardgames.game500.game.logic.Helpers.MapOps
 
 object MakeBidAction {
 
