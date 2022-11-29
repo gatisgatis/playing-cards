@@ -51,6 +51,9 @@ object TableActor {
           .thenReply(replyTo)(_ => Right(AddPlayerResponse(playerId)))
 
       case RemovePlayer(_, playerId, timestamp, replyTo) =>
+        // if game has been started, must somehow save info about player who quit
+        // and trigger finish round command
+        // which will eventually trigger finish game command
         Effect
           .persist(PlayerLeft(timestamp, playerId))
           .thenReply(replyTo)(_ => Right(RemovePlayerResponse(playerId)))
@@ -146,6 +149,7 @@ object TableActor {
         )
 
       case FinishRound(_, timestamp, replyTo) =>
+        // if game.stage=Finished, then after this should trigger finishGame command!?
         handleGameProgressCommand(
           game = FinishRoundAction.apply(state.game),
           timestamp = timestamp,

@@ -2,7 +2,7 @@ package gatis.bigone.cardgames.game500.eventsource.domain
 
 import akka.actor.typed.ActorRef
 import gatis.bigone.cardgames.game500.game.domain.PlayerIndex.FirstPlayer
-import gatis.bigone.cardgames.game500.game.domain.{Game, PlayerIndex}
+import gatis.bigone.cardgames.game500.game.domain.{Game, PlayerIndex, Results}
 import gatis.bigone.domain.PlayerId
 
 import java.time.Instant
@@ -20,7 +20,7 @@ object Domain {
     params: PlayerParams = PlayerParams(),
   )
 
-  case class TableId(value: String)
+  case class TableId(value: String) extends AnyVal
 
   case class TableInfo(
     id: TableId,
@@ -34,6 +34,11 @@ object Domain {
 
   case class TablesFilter(playerId: Option[PlayerId], onlyWithFreeSeats: Boolean)
 
+  case class FinishedGameInfo(
+    players: Map[PlayerId, PlayerIndex],
+    results: Results,
+  )
+
   case class Table(
     id: TableId,
     createdAt: Instant,
@@ -41,6 +46,7 @@ object Domain {
     players: Map[PlayerId, PlayerInfo] = Map.empty,
     spectators: List[PlayerId] = Nil,
     game: Game,
+    finishedGames: List[FinishedGameInfo] = Nil,
   ) {
     def availablePlayerIndexes: Set[PlayerIndex] = PlayerIndex.all -- players.values.map(_.index).toSet
   }

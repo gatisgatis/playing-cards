@@ -39,7 +39,7 @@ object GiveUpAction {
 
   private def checkIfValidPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.round.phase != PassingCards)
-      Left(DefaultGameError(msg = s"Giving Up is not allowed in \"${game.round.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Giving Up is not allowed in '${game.round.phase}' phase"))
     else Right(())
 
   private def checkIfPlayerIsAllowedToGiveUp(game: Game): Either[ErrorG500, Unit] =

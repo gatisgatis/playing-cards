@@ -5,7 +5,7 @@ import gatis.bigone.cardgames.game500.game.domain.GameError.DefaultGameError
 import gatis.bigone.cardgames.game500.game.domain.Phase.RoundEnding
 import gatis.bigone.cardgames.game500.game.domain.Round.PlayersOps
 import gatis.bigone.cardgames.game500.game.domain.Stage.Finished
-import gatis.bigone.cardgames.game500.game.domain.{Game, PlayerIndex, Result, Round}
+import gatis.bigone.cardgames.game500.game.domain.{Game, PlayerIndex, ResultLine, Results, Round}
 
 object FinishRoundAction {
 
@@ -29,7 +29,7 @@ object FinishRoundAction {
       prevIndex -> prevPlayerPoints,
     )
 
-    val gamePoints = game.results.last.gamePoints
+    val gamePoints = game.results.gamePoints
 
     val gamePointsUpdated = Map(
       activeIndex -> (gamePoints(activeIndex) - activePlayerPoints),
@@ -37,14 +37,18 @@ object FinishRoundAction {
       prevIndex -> (gamePoints(prevIndex) - prevPlayerPoints),
     )
 
-    val line = Result(
+    val line = ResultLine(
       bid = Some(game.round.highestBid),
       bigIndex = game.round.bigIndex,
-      roundPoints = roundPointsUpdated,
-      gamePoints = gamePointsUpdated,
+      points = roundPointsUpdated,
     )
 
-    val resultsUpdated = game.results :+ line
+    val linesUpdated = game.results.lines :+ line
+
+    val resultsUpdated = game.results.copy(
+      gamePoints = gamePointsUpdated,
+      lines = linesUpdated,
+    )
 
     val isGameFinished = gamePointsUpdated.exists { case (_, points) => points <= 0 }
 
@@ -60,10 +64,10 @@ object FinishRoundAction {
 
   private def checkIfRoundEndingPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.round.phase != RoundEnding)
-      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.round.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Bidding is not allowed in '${game.round.phase}' phase"))
     else Right(())
 
-  private[logic] def determineRoundPoints(game: Game, index: PlayerIndex, points: Int): Int =
+  private def determineRoundPoints(game: Game, index: PlayerIndex, points: Int): Int =
     if (game.round.bigIndex.contains(index)) {
       val highestBid = game.round.highestBid
       if (highestBid <= points) highestBid
@@ -73,12 +77,8 @@ object FinishRoundAction {
       val pointsRounded =
         if (diffOfFive > 2) points - diffOfFive + 5
         else points - diffOfFive
-      game.results.lastOption match {
-        case None => pointsRounded
-        case Some(line) =>
-          val gamePoints = line.gamePoints(index)
-          if (gamePoints < 100) 0 else pointsRounded
-      }
+      val gamePoints = game.results.gamePoints(index)
+      if (gamePoints < 100) 0 else pointsRounded
     }
 
 }

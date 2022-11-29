@@ -6,6 +6,7 @@ import Dependencies._
 libraryDependencies ++= Seq(
   ZIO.Std,
   ZIO.Http,
+  ZIO.Json,
   Akka.ActorTyped,
   Akka.PersistenceTyped,
   Akka.PersistenceCassandra,

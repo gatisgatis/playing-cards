@@ -1,6 +1,7 @@
 package gatis.bigone.cardgames.game500.game.domain
 
 import gatis.bigone.cardgames.game500.game.domain.Stage.UnStarted
+import gatis.bigone.domain.PlayerId
 
 import java.util.UUID
 
@@ -10,7 +11,7 @@ final case class Game(
   id: GameId,
   round: Round,
   stage: Stage,
-  results: List[Result],
+  results: Results,
 )
 
 object Game {
@@ -19,6 +20,6 @@ object Game {
       id = GameId(UUID.randomUUID.toString),
       round = Round.empty,
       stage = UnStarted,
-      results = Nil,
+      results = Results.init(),
     )
 }

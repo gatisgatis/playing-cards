@@ -18,7 +18,7 @@ object StartRoundAction {
 
   private def checkIfNotStartedPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.round.phase != NotStarted)
-      Left(DefaultGameError(msg = s"Not in \"${game.round.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Not in '${game.round.phase}' phase"))
     else Right(())
 
   private def checkIfGameInProgressStage(game: Game): Either[ErrorG500, Unit] =

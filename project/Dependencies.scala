@@ -6,6 +6,7 @@ object Dependencies {
 
   object ZIO {
     val Std = "dev.zio" %% "zio" % ZioVersion
+    val Json = "dev.zio" %% "zio-json" % "0.3.0"
 //    val Streams = "dev.zio" %% "zio-streams" % ZioVersion
 //    val test = "dev.zio" %% "zio-test" % ZioVersion % Test
 //    val testSbt = "dev.zio" %% "zio-test-sbt" % ZioVersion % Test

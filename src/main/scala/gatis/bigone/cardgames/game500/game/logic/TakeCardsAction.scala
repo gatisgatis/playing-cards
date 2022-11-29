@@ -26,7 +26,7 @@ object TakeCardsAction {
 
   private def checkIfTakingCardsPhase(game: Game): Either[ErrorG500, Unit] =
     if (game.round.phase != TakingCards)
-      Left(DefaultGameError(msg = s"Bidding is not allowed in \"${game.round.phase}\" phase"))
+      Left(DefaultGameError(msg = s"Bidding is not allowed in '${game.round.phase}' phase"))
     else Right(())
 
 }

@@ -49,8 +49,11 @@ object TableManagerActor {
                   // is this player at the table?
                   // if last player then also TableClosed event?
                   val event = PlayerRemoved(tableId = tableId, playerId = playerId)
+                  // TODO if this is last player at the table, call Close Table Command???
+                  val sideEffect: State => Unit = ???
                   Effect
                     .persist(event)
+                    .thenRun(sideEffect)
                     .thenReply(tableInfo.tableActor)(_ => tableSpecificCommand)
 
                 case AddSpectator(tableId, playerId, _) =>
@@ -135,9 +138,10 @@ object TableManagerActor {
                   val players = tableInfo.players :+ playerId
                   state.updated(tableId, tableInfo.copy(players = players))
                 case PlayerRemoved(tableId, playerId) =>
-                  // TODO. if admin leaves, change admin..?
                   val players = tableInfo.players.filterNot(_ == playerId)
-                  state.updated(tableId, tableInfo.copy(players = players))
+                  val adminUpdated =
+                    if (playerId == tableInfo.admin && players.nonEmpty) players.head else tableInfo.admin
+                  state.updated(tableId, tableInfo.copy(players = players, admin = adminUpdated))
                 case SpectatorAdded(tableId, playerId) =>
                   val spectators = tableInfo.spectators :+ playerId
                   state.updated(tableId, tableInfo.copy(spectators = spectators))
@@ -161,12 +165,12 @@ object TableManagerActor {
             isPrivate = isPrivate,
             createdAt = timestamp,
           )
-          state ++ (tableId -> tableInfo)
+          state + (tableId -> tableInfo)
       }
 
   def apply(): Behavior[Command] = Behaviors.setup { context =>
     EventSourcedBehavior[Command, TableManagerEvent, State](
-      persistenceId = PersistenceId.ofUniqueId("game500-table-manager"),
+      persistenceId = PersistenceId.ofUniqueId("game500tablemanager"),
       emptyState = Map.empty,
       commandHandler = commandHandler(context),
       eventHandler = eventHandler(context),
